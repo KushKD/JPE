@@ -234,17 +234,18 @@ V4u5
 			// $encS = $gpg->encrypt($signed);
 			// echo "encrypted Signed Data: ". $encS ."<br><br>";
 
-			//Verify Json Payload Normal with Public Key (DIHP)
-			//signed_JsonPayload_normal 
+			//Verify Json Payload Normal 
 			$signed_json_payload = file_get_contents(__DIR__ . '/SampleData/signed_JsonPayload_normal.txt'); 
 			$gpg = new gnupg();
-			// clearsigned
+			// clearsigned Working
 			//$info = $gpg -> verify($signed_json_payload,false,$text);
-			//print_r($info);
+			// print_r($info);
+			// var_dump($info); 
 			// detached signature
-			$gpg->seterrormode(GNUPG_ERROR_WARNING); 
-			 $info = $gpg -> verify($signed_json_payload,$privateKeyImport['fingerprint']);
-			 $gpg->seterrormode(GNUPG_ERROR_WARNING); 
+			 $gpg->seterrormode(GNUPG_ERROR_WARNING);
+			// var_dump($privateKeyImport);
+			 $info = $gpg -> verify($signed_json_payload,false,$text);
+			 var_dump($info);
 			 print_r($info);
 
 
@@ -257,9 +258,14 @@ V4u5
 
 
 
+		/**
+		* UAT Axis Bank
+		* Public Key Provided by Axis Bank
+		*Function Working
+		**/
 		public function actionUatAxisBank(){
 
-			$text = file_get_contents(__DIR__ . '/SampleData/PaymentReq_JSON.txt');
+			$text = file_get_contents(__DIR__ . '/UAT_AXIS/SE.txt');  
 			$privateKeyDihp =  file_get_contents(__DIR__ . '/UAT_AXIS/PrivateKey_DIHP.txt');;
 			$publicKeyDihp =  file_get_contents(__DIR__ . '/UAT_AXIS/PublicKey_DIHP.txt');
 			$publicKeyAxis =  file_get_contents(__DIR__ . '/UAT_AXIS/DIHP_UAT_01022019.pkr');
@@ -279,74 +285,30 @@ V4u5
 
 
 			//Encrypt Data With Signing
-			$importedkey = $gpg->import($publicKeyAxis);
+			$importedkey = $gpg->import($publicKeyAxis); //Earlier Public Key Axis Bank
 			$rtv = $gpg->addencryptkey($importedkey['fingerprint']);
-			$encS = $gpg->encrypt($signedText);
+			$encS = $gpg->encrypt($signedText);  //signedText
 			echo "encrypted Signed Data: ". $encS ."<br><br>";
 			file_put_contents("encrypt_data_with_signin_uatAxis.txt", $encS);
-			
-			
-			   
-		}
 
-
-
-
-
-public function actionAxisBankTest(){
-			  
-			  
-			$gpg = new gnupg(); 
-			$text = file_get_contents(__DIR__ . '/SampleData/Axis_Bank_Data/Sample_Payload.txt');
-			$privateKeyAxis = file_get_contents(__DIR__ . '/SampleData/Axis_Bank_Data/Keys/Keys/PrivateKey_DIHP.skr');
-			$publicKeyAxis =  file_get_contents(__DIR__ . '/SampleData/Axis_Bank_Data/Keys/Keys/PublicKey_DIHP.pkr');
-			
-			$privateKeyImport = $gpg->import($privateKeyAxis);  //earlier  
 
 			
-
-			
-			//Sign the Data -- Working
-			$rtv = $gpg->addsignkey($privateKeyImport['fingerprint']);
-			$gpg->seterrormode(GNUPG_ERROR_WARNING); 
-			$signed = $gpg->sign($text);
-			//file_put_contents("signed_JsonPayload.txt", $signed);
-			echo "Siged Data: ". $signed ."<br><br>"; die();
-
-			$importedkey = $gpg->import($publicKeyAxis);
-
-			$rtv = $gpg->addencryptkey($importedkey['fingerprint']);
-			$enc = $gpg->encrypt($text);
-			echo "Encrtted Data: ". $enc ."<br><br>";
-			// file_put_contents("encrypt_data_without_signin.txt", $enc);
-
-
 			/**
-			* decryption process
-			* @added Hemant
+			* Encryption and SignIn process
+			* @added Kush Kumar Dhawan 
 			*/
-				$rtv = $gpg->addencryptkey($privateKeyImport['fingerprint']);  
-				$dec = $gpg->decrypt($enc);
-				echo "Decrypted Data: ". $dec ."<br><br>";
+			$gpg = new gnupg();
+			$gpg -> addencryptkey($importedkey['fingerprint']);
+			$gpg -> addsignkey($privateKeyImport['fingerprint']);
+			$enc = $gpg -> encryptsign($text);
+			file_put_contents("encryptandsign.txt", $enc);
+			echo $enc; 
 
-			/*
-			* decryption end here
-			*/
-
-			//echo $signed ; die;
-			//$importedkey = $gpg->import($publickey);
-			//$rtv = $gpg->addencryptkey($importedkey['fingerprint']);
-			//$encS = $gpg->encrypt($signed);
-			//echo "encrypted Signed Data: ". $encS ."<br><br>";
-
-
-			//$rtv = $gpg->addencryptkey($privateKeyImport['fingerprint']);
-			//$decS = $gpg->decrypt($encS);
-			//echo "Decrypted Data: ". $decS ."<br><br>";
-
+			
 			
 			   
 		}
+
 
 
 
