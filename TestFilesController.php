@@ -302,8 +302,20 @@ V4u5
 			$gpg -> addsignkey($privateKeyImport['fingerprint']);
 			$enc = $gpg -> encryptsign($text);
 			file_put_contents("encryptandsign.txt", $enc);
-			echo $enc; 
+			echo $enc ."<br><br>";
 
+			/**
+			* Decryption Process
+			*@added Kush Kumar Dhawan 
+			*/
+			$encrypted_text = file_get_contents(__DIR__ . '/UAT_AXIS/Sign_and_Enc.txt');
+			echo "Encrypted  Data: ". $encrypted_text ."<br><br>";
+			$gpg = new gnupg();
+			$gpg -> adddecryptkey($privateKeyImport['fingerprint'],"");
+			$plain = $gpg -> decrypt($encrypted_text);  //Get the Encrypted text from Axis Bank
+			echo "Decrypted  Data: ". $plain ."<br><br>";
+
+			
 			
 			
 			   
