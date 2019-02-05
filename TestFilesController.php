@@ -304,8 +304,30 @@ V4u5
 			file_put_contents("encryptandsign.txt", $enc);
 			echo $enc ."<br><br>";
 
+			
+
+
 			/**
-			* Decryption Process
+			* Verify Sign before Decryption
+			*@added Kush Kumar Dhawan
+			*/
+			$encrypted_text_to_verify = file_get_contents(__DIR__ . '/UAT_AXIS/Sign_and_Enc.txt');
+			$gpg = new gnupg();
+			// clearsigned Working
+			//$info = $gpg -> verify($signed_json_payload,false,$text);
+			// print_r($info);
+			// var_dump($info); 
+			// detached signature
+			 $gpg->seterrormode(GNUPG_ERROR_WARNING);
+			 echo($importedkey['fingerprint']) ."<br></br>";   
+			 $info = $gpg -> verify($encrypted_text_to_verify,false);
+			// var_dump($info); //die("ui") ;
+			// echo($info[0]['fingerprint']);
+
+
+			 if($importedkey['fingerprint'] = $info[0]['fingerprint']){
+			 	/**
+			* Decryption Process  if  $importedkey['fingerprint']  ===  $info[0]['fingerprint']
 			*@added Kush Kumar Dhawan 
 			*/
 			$encrypted_text = file_get_contents(__DIR__ . '/UAT_AXIS/Sign_and_Enc.txt');
@@ -314,6 +336,9 @@ V4u5
 			$gpg -> adddecryptkey($privateKeyImport['fingerprint'],"");
 			$plain = $gpg -> decrypt($encrypted_text);  //Get the Encrypted text from Axis Bank
 			echo "Decrypted  Data: ". $plain ."<br><br>";
+		}else{
+			echo "Sign In Verification failed.  Data <br><br>";
+		}
 
 			
 			
