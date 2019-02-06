@@ -1,7 +1,16 @@
 <?php
 
 	/**
-	 * 
+	 * CORP CODE:DEMOCORP18
+*CORPORATE ACCOUNT NO: 273010200005555
+*
+*TXN_PAYMODE
+*NEFT - NE
+*RTGS - RT
+*INTERNAL FUND TRANSFER - FT
+*IMPS - PA
+*CHEQUE - CC
+*DEMAND DRAFT  - DD
 	 */
 	class TestFilesController extends Controller
 	{
