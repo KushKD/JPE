@@ -265,31 +265,34 @@ V4u5
 		**/
 		public function actionUatAxisBank(){
 
-			$text = file_get_contents(__DIR__ . '/UAT_AXIS/SE.txt');  
+			//$text = file_get_contents(__DIR__ . '/UAT_AXIS/PaymentReq_JSON.txt'); 
+			$text = $this->CreateJsonPayload();
+			// echo "<pre>"; 
+			//  print_r(json_encode($text)); die("Text is Here"); 
 			$privateKeyDihp =  file_get_contents(__DIR__ . '/UAT_AXIS/PrivateKey_DIHP.txt');;
 			$publicKeyDihp =  file_get_contents(__DIR__ . '/UAT_AXIS/PublicKey_DIHP.txt');
 			$publicKeyAxis =  file_get_contents(__DIR__ . '/UAT_AXIS/DIHP_UAT_01022019.pkr');
 
 			//Sign the Data Using DIHP Private Key
-			$gpg = new gnupg(); 
-			$privateKeyImport = $gpg->import($privateKeyDihp); 
-			$gpg->seterrormode(GNUPG_ERROR_WARNING); 
+			// $gpg = new gnupg(); 
+			// $privateKeyImport = $gpg->import($privateKeyDihp); 
+			// $gpg->seterrormode(GNUPG_ERROR_WARNING); 
 			
 			//Sign the Data -- Working
-			$gpg->setsignmode(GNUPG_SIG_MODE_DETACH);
-			$rtv = $gpg->addsignkey($privateKeyImport['fingerprint']);
-			$gpg->seterrormode(GNUPG_ERROR_WARNING); 
-			$signedText = $gpg->sign($text);
-			echo "Signed Data:" . $signedText ."<br><br>";
-			file_put_contents("signed_JsonPayload_UAT_Axis.txt", $signedText);
+			// $gpg->setsignmode(GNUPG_SIG_MODE_DETACH);
+			// $rtv = $gpg->addsignkey($privateKeyImport['fingerprint']);
+			// $gpg->seterrormode(GNUPG_ERROR_WARNING); 
+			// $signedText = $gpg->sign($text);
+			// echo "Signed Data:" . $signedText ."<br><br>";
+			// file_put_contents("signed_JsonPayload_UAT_Axis.txt", $signedText);
 
 
 			//Encrypt Data With Signing
-			$importedkey = $gpg->import($publicKeyAxis); //Earlier Public Key Axis Bank
-			$rtv = $gpg->addencryptkey($importedkey['fingerprint']);
-			$encS = $gpg->encrypt($signedText);  //signedText
-			echo "encrypted Signed Data: ". $encS ."<br><br>";
-			file_put_contents("encrypt_data_with_signin_uatAxis.txt", $encS);
+			// $importedkey = $gpg->import($publicKeyAxis); //Earlier Public Key Axis Bank
+			// $rtv = $gpg->addencryptkey($importedkey['fingerprint']);
+			// $encS = $gpg->encrypt($signedText);  //signedText
+			// echo "encrypted Signed Data: ". $encS ."<br><br>";
+			// file_put_contents("encrypt_data_with_signin_uatAxis.txt", $encS);
 
 
 			
@@ -298,12 +301,20 @@ V4u5
 			* @added Kush Kumar Dhawan 
 			*/
 			$gpg = new gnupg();
-			$gpg -> addencryptkey($importedkey['fingerprint']);
+			//$gpg->setsignmode(GNUPG_SIG_MODE_DETACH);
+			$privateKeyImport = $gpg->import($privateKeyDihp); 
+			$publicKeyImport= $gpg->import($publicKeyAxis); 
+			$gpg -> addencryptkey($publicKeyImport['fingerprint']);
 			$gpg -> addsignkey($privateKeyImport['fingerprint']);
-			$enc = $gpg -> encryptsign($text);
+			$enc = $gpg -> encryptsign(json_encode($text));
+			//$enc = $gpg -> encryptsign($text);
 			file_put_contents("encryptandsign.txt", $enc);
 			echo $enc ."<br><br>";
 
+			//Pass the Data to Dervice $enc and get the response
+
+			$responseFromServer = $this->PostDataToServer($enc);
+ 
 			
 
 
@@ -320,6 +331,7 @@ V4u5
 			// detached signature
 			 $gpg->seterrormode(GNUPG_ERROR_WARNING);
 			 echo($importedkey['fingerprint']) ."<br></br>";   
+			// $info = $gpg -> verify($encrypted_text_to_verify,false);
 			 $info = $gpg -> verify($encrypted_text_to_verify,false);
 			// var_dump($info); //die("ui") ;
 			// echo($info[0]['fingerprint']);
@@ -344,6 +356,113 @@ V4u5
 			
 			
 			   
+		}
+   
+
+		public function PostDataToServer($enc){
+				//echo $enc; die("Yahan");
+
+				// Endpoint - https://qah2h.axisbank.co.in/RESTAdapter/AxisBank/Dihp/Pay
+				// user name- corpuser
+				// password- will be shared across call
+
+				$url = "https://qah2h.axisbank.co.in/RESTAdapter/AxisBank/Dihp/Pay";
+				$username = "corpuser";
+				$password = "axiscorpcon1!"; //axiscorp1!
+
+				$ch = curl_init();
+				curl_setopt($ch, CURLOPT_URL, $url);
+				curl_setopt( $ch, CURLOPT_POSTFIELDS, $enc);
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
+				curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+				$output = curl_exec($ch);
+				$info = curl_getinfo($ch);
+				curl_close($ch);
+				 var_dump($output);
+
+				//  if ($output === false) {
+    //     throw new Exception(curl_error($ch), curl_errno($ch));
+    // }
+
+				print_r($info);print_r($output); die("Yo Yo YO");
+
+
+		}
+
+
+
+
+
+
+
+//$this->loadModel($submissionID);
+public function CreateJsonPayload(){
+
+			$PAYMENTS = array();
+			$JSON=array();		
+			$JSON['RECORD']['PAYMENT_DETAILS'][]=array('PAYMENTS'=>array( 
+																	'API_VERSION'=> "1",
+																	'CORP_CODE'=> "DEMOCORP18",
+																	'CMPY_CODE'=> "",
+																	'TXN_CRNCY'=> "INR",
+																	'TXN_PAYMODE'=> "NE",
+																	'CUST_UNIQ_REF'=> "AJAX20181112125752705489",
+																	'TXN_TYPE'=> "",
+																	'TXN_AMOUNT'=> "1",
+																	'CORP_ACC_NUM'=> "273010200005555",
+																	'CORP_IFSC_CODE'=> "",
+																	'ORIG_USERID'=> "",
+																	'USER_DEPARTMENT'=> "",
+																	'TRANSMISSION_DATE'=> "06-02-2019 20-26-19",
+																	'BENE_CODE'=> "33416ae2",
+																	'VALUE_DATE'=> "06-02-2019",
+																	'RUN_IDENTIFICATION'=> "",
+																	'FILE_NAME'=> "",
+																	'BENE_NAME'=> "Kush",
+																	'BENE_ACC_NUM'=> "31136695259",
+																	'BENE_IFSC_CODE'=> "SBIN0007115",
+																	'BENE_AC_TYPE'=> "",
+																	'BENE_BANK_NAME'=> "",
+																	'BASE_CODE'=> "DEMOCORP",
+																	'CHEQUE_NUMBER'=> "",
+																	'CHEQUE_DATE'=> array(),  
+																	'PAYABLE_LOCATION'=> "",
+																	'PRINT_LOCATION'=> "",
+																	'PRODUCT_CODE'=> "",
+																	'BATCH_ID'=> "1",
+																	'BENE_ADDR_1'=> "",
+																	'BENE_ADDR_2'=> "",
+																	'BENE_ADDR_3'=> "",
+																	'BENE_CITY'=> "",
+																	'BENE_STATE'=> "",
+																	'BENE_PINCODE'=> "",
+																	'CORP_EMAIL_ADDR'=> "",
+																	'BENE_EMAIL_ADDR1'=> "",
+																	'BENE_EMAIL_ADDR2'=> "",
+																	'BENE_MOBILE_NO'=> "",
+																	'ENRICHMENT1'=> "",
+																	'ENRICHMENT2'=> "",
+																	'ENRICHMENT3'=> "",
+																	'ENRICHMENT4'=> "",
+																	'ENRICHMENT5'=> "",
+																	'STATUS_ID'=> "" 
+																		  
+																),
+															"INVOICE"=>array(array("INVOICE_NUMBER"=>"",
+																					"INVOICE_DATE"=>"",
+																					"NET_AMOUNT" => "",
+																					"TAX" => "",
+																					"CASH_DISCOUNT" => "",
+																					"INVOICE_AMOUNT" => ""
+																				)
+																			)
+																		);
+
+
+		
+			return $JSON;
+
 		}
 
 
